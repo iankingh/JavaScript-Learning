@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEIC 轉 JPG 示範</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        #preview-area {
+            margin-top: 20px;
+        }
+
+        #showImage {
+            display: none;
+            border: 2px dashed #4caf50;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: #555;
+        }
+
+        #error-msg {
+            margin-top: 10px;
+            color: #d32f2f;
+        }
+    </style>
+    <script src="./vendor/heic2any.js"></script>
+</head>
+
+<body>
+    <h2>HEIC → JPG 轉換示範</h2>
+    <p>選擇一張 <code>.heic</code> 格式的圖片，自動轉換並預覽。</p>
+
+    <input type="file" id="fileInput" accept=".heic,.HEIC,image/heic,image/heif" />
+
+    <div id="preview-area">
+        <img id="showImage" alt="轉換後的圖片預覽" />
+        <p id="status"></p>
+        <p id="error-msg"></p>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const showImage = document.getElementById('showImage');
+        const statusEl = document.getElementById('status');
+        const errorEl = document.getElementById('error-msg');
+
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 重置狀態
+            errorEl.textContent = '';
+            showImage.style.display = 'none';
+            showImage.src = '';
+
+            // 驗證檔案類型
+            const isHeic = file.type === 'image/heic'
+                || file.type === 'image/heif'
+                || file.name.toLowerCase().endsWith('.heic');
+
+            if (!isHeic) {
+                errorEl.textContent = '請選擇 .heic 格式的圖片檔案。';
+                return;
+            }
+
+            statusEl.textContent = '轉換中，請稍候...';
+
+            try {
+                const convertedBlob = await heic2any({
+                    blob: file,
+                    toType: 'image/jpeg',
+                    quality: 0.8,
+                });
+
+                const base64 = await blobToDataURL(convertedBlob);
+                showImage.src = base64;
+                showImage.style.display = 'block';
+                statusEl.textContent = '轉換成功！';
+            } catch (err) {
+                console.error('heic2any conversion error:', err);
+                errorEl.textContent = `轉換失敗：${err.message || '未知錯誤'}`;
+                statusEl.textContent = '';
+            }
+        });
+
+        function blobToDataURL(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (err) => reject(err);
+            });
+        }
+    </script>
+</body>
+
+</html>
