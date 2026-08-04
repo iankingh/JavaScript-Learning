@@ -1,31 +1,58 @@
 # JavaScript Learning
 
-個人 JavaScript 學習記錄，每個資料夾對應一個主題，包含範例與練習。
+個人 JavaScript 學習範例集。各資料夾皆為獨立主題：Node.js 範例可直接執行，瀏覽器範例則是無建置流程的 HTML 頁面。
 
-## 主題目錄
+## 學習主題
 
-| 資料夾 | 說明 | 執行環境 |
+| 資料夾 | 內容 | 執行環境 |
 |---|---|---|
-| [es6-features/](es6-features/) | ES6+ 語法特性（解構、箭頭函式、類別等） | Node.js |
-| [async-js/](async-js/) | 非同步程式設計（Promise、async/await、事件迴圈） | Node.js |
-| [dom-manipulation/](dom-manipulation/) | DOM 操作與事件處理 | 瀏覽器 |
-| [fetch-api/](fetch-api/) | Fetch API 與 HTTP 請求 | 瀏覽器 |
-| [image-processing/](image-processing/) | 圖片處理相關範例 | 瀏覽器 |
+| [es6-features/](es6-features/) | `let`／`const`、箭頭函式、解構、展開與其餘、template literals、class、optional chaining、iterator、generator、ES modules | Node.js |
+| [async-js/](async-js/) | callback、Promise、`async`／`await`、錯誤處理、event loop、microtask 與 macrotask | Node.js |
+| [dom-manipulation/](dom-manipulation/) | DOM 查找與增刪改、事件、表單驗證、IntersectionObserver、MutationObserver | 瀏覽器 |
+| [fetch-api/](fetch-api/) | GET／POST／PUT／DELETE、headers、錯誤處理、AbortController、CORS 與離線 mock | 瀏覽器 |
+| [image-processing/](image-processing/) | 使用 vendored `heic2any` 在瀏覽器將 HEIC／HEIF 轉為 JPEG | 瀏覽器 |
 
-## 範例清單
+各主題的檔案與操作方式請見資料夾內 README。
 
-### ES6+ Features
-- [demo.js](es6-features/demo.js) — let/const、箭頭函式、解構、展開/其餘、模板字串、類別、可選鏈、空值合併、Symbol/Iterator、Generator
-- [esm-demo.mjs](es6-features/esm-demo.mjs) — ESM 模組系統（named / default / namespace / 動態 import）
+## 環境需求
 
-### Async JavaScript
-- [demo.js](async-js/demo.js) — Callback 與 Callback Hell、Promise（then/catch/finally）、Promise.all/race/allSettled、async/await、錯誤處理、微任務 vs 巨集任務
+- Node.js：執行 `async-js/` 與 `es6-features/`；倉庫未鎖定版本，建議使用目前受支援的 LTS 版本。
+- 現代瀏覽器：執行 DOM、Fetch 與圖片處理範例。
+- Fetch 真實請求需網路連線；HEIC 轉換建議透過本地 HTTP server 開啟，避免瀏覽器限制 `file://` 下的 Web Worker。
 
-### DOM Manipulation
-- [index.html](dom-manipulation/index.html) — 選取元素、增修改刪節點、事件監聽與委派、冒泡/捕獲、classList、表單驗證、IntersectionObserver、MutationObserver
+本倉庫沒有 `package.json`，不需安裝 npm 套件，也沒有 build、test 或 lint script。
 
-### Fetch API
-- [index.html](fetch-api/index.html) — GET/POST/PUT/DELETE、headers、JSON、HTTP 狀態碼錯誤處理、AbortController、CORS 示範、離線模式
+## 執行方式
 
-### Image Processing
-- [HEIC → JPG 轉換](image-processing/heic2any/) — 使用 heic2any 函式庫在瀏覽器端轉換 HEIC 圖片格式
+Node.js 範例：
+
+```bash
+node async-js/demo.js
+node es6-features/demo.js
+node es6-features/esm-demo.mjs
+```
+
+瀏覽器範例可直接開啟對應的 `index.html`：
+
+- `dom-manipulation/index.html`
+- `fetch-api/index.html`
+- `image-processing/heic2any/index.html`
+
+## 專案結構
+
+```text
+JavaScript-Learning/
+├── async-js/              # 非同步 JavaScript
+├── dom-manipulation/      # DOM 與事件
+├── es6-features/          # ES6+ 與 ESM
+├── fetch-api/             # Fetch API
+└── image-processing/
+    └── heic2any/          # HEIC → JPEG 頁面與本地 vendor
+```
+
+## 設定與限制
+
+- 不需環境變數或秘密設定。
+- `fetch-api/` 預設呼叫 JSONPlaceholder，另有一個刻意觸發 CORS 的 httpbin 範例；可切換頁面內的離線模式。
+- `image-processing/heic2any/vendor/heic2any.js` 已存放於倉庫，不會由 npm 安裝。
+- 這是可手動操作的學習範例集，目前沒有自動化測試或統一開發伺服器。
