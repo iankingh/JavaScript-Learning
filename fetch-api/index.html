@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fetch API 入門範例</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 30px auto; padding: 0 20px; }
+    section { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    h2 { margin-top: 0; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 260px; }
+    button { padding: 6px 12px; cursor: pointer; margin-right: 8px; }
+    .status { font-weight: bold; }
+    .error { color: #d32f2f; }
+    .ok { color: #2e7d32; }
+  </style>
+</head>
+
+<body>
+  <h1>Fetch API 入門範例</h1>
+  <p>使用公開 API <a href="https://jsonplaceholder.typicode.com" target="_blank">JSONPlaceholder</a> 示範。</p>
+
+  <!-- 1. GET 請求 -->
+  <section>
+    <h2>1. GET 請求（取得資料）</h2>
+    <button id="get-btn">取得 5 篇文章</button>
+    <p class="status" id="get-status"></p>
+    <pre id="get-result"></pre>
+  </section>
+
+  <!-- 2. POST 請求 -->
+  <section>
+    <h2>2. POST 請求（新增資料）</h2>
+    <button id="post-btn">新增一篇文章</button>
+    <p class="status" id="post-status"></p>
+    <pre id="post-result"></pre>
+  </section>
+
+  <!-- 3. 錯誤處理（HTTP 狀態碼判斷）-->
+  <section>
+    <h2>3. 錯誤處理（HTTP 狀態碼）</h2>
+    <button id="error-btn">請求不存在的資源（404）</button>
+    <p class="status" id="error-status"></p>
+    <pre id="error-result"></pre>
+  </section>
+
+  <!-- 4. AbortController 取消請求 -->
+  <section>
+    <h2>4. AbortController 取消請求</h2>
+    <button id="start-btn">發送請求</button>
+    <button id="cancel-btn">取消請求</button>
+    <p class="status" id="abort-status"></p>
+  </section>
+
+  <script>
+    const API = 'https://jsonplaceholder.typicode.com';
+
+    // 1. GET 請求（搭配 async/await）
+    document.getElementById('get-btn').addEventListener('click', async () => {
+      const status = document.getElementById('get-status');
+      const result = document.getElementById('get-result');
+      status.textContent = '載入中...';
+      result.textContent = '';
+      try {
+        const res = await fetch(`${API}/posts?_limit=5`);
+        // 注意：fetch 只在網路錯誤時 reject，HTTP 4xx/5xx 不會自動 reject
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        status.textContent = `✅ 取得成功（HTTP ${res.status}）`;
+        status.className = 'status ok';
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = `❌ ${err.message}`;
+        status.className = 'status error';
+      }
+    });
+
+    // 2. POST 請求（含 headers 與 JSON body）
+    document.getElementById('post-btn').addEventListener('click', async () => {
+      const status = document.getElementById('post-status');
+      const result = document.getElementById('post-result');
+      status.textContent = '送出中...';
+      result.textContent = '';
+      try {
+        const res = await fetch(`${API}/posts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '我的新文章',
+            body: '這是文章內容',
+            userId: 1,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        status.textContent = `✅ 新增成功（HTTP ${res.status}，id: ${data.id}）`;
+        status.className = 'status ok';
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = `❌ ${err.message}`;
+        status.className = 'status error';
+      }
+    });
+
+    // 3. 錯誤處理：HTTP 狀態碼
+    document.getElementById('error-btn').addEventListener('click', async () => {
+      const status = document.getElementById('error-status');
+      const result = document.getElementById('error-result');
+      status.textContent = '請求中...';
+      result.textContent = '';
+      try {
+        const res = await fetch(`${API}/posts/999999`);
+        // res.ok 為 false（404），需手動拋出錯誤
+        if (!res.ok) throw new Error(`HTTP ${res.status} — 找不到資源`);
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = `❌ ${err.message}`;
+        status.className = 'status error';
+        result.textContent = '（fetch 不會對 4xx/5xx 自動 reject，需用 res.ok 判斷）';
+      }
+    });
+
+    // 4. AbortController 取消請求
+    let controller;
+    document.getElementById('start-btn').addEventListener('click', async () => {
+      const status = document.getElementById('abort-status');
+      controller = new AbortController();
+      status.textContent = '請求中...（按「取消請求」可中斷）';
+      status.className = 'status';
+      try {
+        const res = await fetch(`${API}/posts?_delay=2000`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        status.textContent = `✅ 請求完成（共 ${data.length} 篇）`;
+        status.className = 'status ok';
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          status.textContent = '🛑 請求已取消';
+          status.className = 'status error';
+        } else {
+          status.textContent = `❌ ${err.message}`;
+          status.className = 'status error';
+        }
+      }
+    });
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      if (controller) controller.abort();
+    });
+  </script>
+</body>
+
+</html>

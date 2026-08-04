@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOM Manipulation 入門範例</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 30px auto; padding: 0 20px; }
+    section { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    h2 { margin-top: 0; }
+    .box { padding: 10px 14px; margin: 4px 0; border-radius: 4px; background: #f0f7ff; }
+    .highlight { background: #ffe9b3; }
+    .error-msg { color: #d32f2f; margin-top: 6px; }
+    .ok-msg { color: #2e7d32; margin-top: 6px; }
+    input { padding: 6px; }
+    button { padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+
+<body>
+  <h1>DOM Manipulation 入門範例</h1>
+
+  <!-- 1. 選取元素 -->
+  <section>
+    <h2>1. 選取元素</h2>
+    <p id="demo-text">我是被選取的文字。</p>
+    <button id="select-btn">選取並修改我</button>
+  </section>
+
+  <!-- 2. 新增 / 修改 / 刪除節點 -->
+  <section>
+    <h2>2. 新增 / 修改 / 刪除節點</h2>
+    <div id="list-area"></div>
+    <button id="add-btn">新增項目</button>
+  </section>
+
+  <!-- 3. 事件監聽與事件委派 -->
+  <section>
+    <h2>3. 事件監聽與事件委派</h2>
+    <ul id="delegate-list">
+      <li>項目 A <button class="remove">移除</button></li>
+      <li>項目 B <button class="remove">移除</button></li>
+    </ul>
+    <p>點擊任一「移除」按鈕，利用事件委派統一在 &lt;ul&gt; 處理。</p>
+  </section>
+
+  <!-- 4. 事件冒泡與捕獲 -->
+  <section>
+    <h2>4. 事件冒泡（Bubbling）與捕獲（Capturing）</h2>
+    <div id="outer" style="background:#e3f2fd;padding:16px;border-radius:6px;">
+      outer（capturing 階段）
+      <div id="inner" style="background:#fff;padding:12px;margin-top:8px;border-radius:4px;">
+        inner（target / bubbling 階段）
+      </div>
+    </div>
+    <p id="phase-log" style="font-family:monospace;font-size:13px;"></p>
+  </section>
+
+  <!-- 5. classList 操作 -->
+  <section>
+    <h2>5. classList 操作</h2>
+    <div id="cls-box" class="box">點擊下方按鈕切換 class</div>
+    <button id="toggle-btn">切換 highlight class</button>
+  </section>
+
+  <!-- 6. 表單驗證 -->
+  <section>
+    <h2>6. 表單驗證</h2>
+    <form id="signup-form">
+      <label>姓名 <input type="text" id="name-input" /></label><br /><br />
+      <label>Email <input type="email" id="email-input" /></label><br /><br />
+      <button type="submit">送出</button>
+    </form>
+    <p id="form-msg" class="error-msg"></p>
+  </section>
+
+  <script>
+    // 1. 選取元素：querySelector / getElementById
+    const selectBtn = document.getElementById('select-btn');
+    const demoText = document.querySelector('#demo-text');
+    selectBtn.addEventListener('click', () => {
+      demoText.textContent = '文字已被 JavaScript 修改！';
+      demoText.style.color = '#1565c0';
+    });
+
+    // 2. 新增 / 修改 / 刪除節點
+    const listArea = document.getElementById('list-area');
+    const addBtn = document.getElementById('add-btn');
+    let counter = 0;
+    addBtn.addEventListener('click', () => {
+      counter++;
+      const item = document.createElement('div');
+      item.className = 'box';
+      item.textContent = `項目 ${counter}`;
+
+      // 新增移除按鈕
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '刪除';
+      removeBtn.style.marginLeft = '10px';
+      removeBtn.addEventListener('click', () => {
+        item.remove(); // 刪除節點
+      });
+
+      item.appendChild(removeBtn);
+      listArea.appendChild(item); // 新增節點
+    });
+
+    // 3. 事件監聽與事件委派
+    const delegateList = document.getElementById('delegate-list');
+    // 只在父層 <ul> 綁一個監聽器，靠 event.target 判斷來源
+    delegateList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove')) {
+        e.target.closest('li').remove();
+      }
+    });
+
+    // 4. 事件冒泡與捕獲
+    const outer = document.getElementById('outer');
+    const inner = document.getElementById('inner');
+    const phaseLog = document.getElementById('phase-log');
+    // capture: true → 在捕獲階段觸發
+    outer.addEventListener('click', () => {
+      phaseLog.textContent += 'outer (capture) → ';
+    }, true);
+    // 預設 capture: false → 在冒泡階段觸發
+    inner.addEventListener('click', () => {
+      phaseLog.textContent += 'inner (target) → ';
+    });
+    outer.addEventListener('click', () => {
+      phaseLog.textContent += 'outer (bubble)\n';
+    });
+    // 點擊 inner 後順序：outer(capture) → inner(target) → outer(bubble)
+
+    // 5. classList 操作
+    const clsBox = document.getElementById('cls-box');
+    document.getElementById('toggle-btn').addEventListener('click', () => {
+      clsBox.classList.toggle('highlight');
+      // 其他常用方法：add / remove / contains
+    });
+
+    // 6. 表單驗證
+    const form = document.getElementById('signup-form');
+    const formMsg = document.getElementById('form-msg');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name-input').value.trim();
+      const email = document.getElementById('email-input').value.trim();
+
+      if (!name) {
+        formMsg.textContent = '請輸入姓名';
+        formMsg.className = 'error-msg';
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        formMsg.textContent = 'Email 格式不正確';
+        formMsg.className = 'error-msg';
+        return;
+      }
+      formMsg.textContent = `送出成功！歡迎 ${name}（${email}）`;
+      formMsg.className = 'ok-msg';
+    });
+  </script>
+</body>
+
+</html>
