@@ -75,6 +75,24 @@
     <p id="form-msg" class="error-msg"></p>
   </section>
 
+  <!-- 7. IntersectionObserver -->
+  <section>
+    <h2>7. IntersectionObserver（捲動進入視窗時觸發）</h2>
+    <p>向下捲動，當每個方塊進入視窗時會自動標記為「已觀察」。</p>
+    <div id="io-spacer" style="height:200px;background:#fafafa;text-align:center;line-height:200px;color:#999;border-radius:4px;">
+      ↓ 往下捲動觀察方塊 ↓
+    </div>
+    <div id="io-targets" style="margin-top:20px;"></div>
+  </section>
+
+  <!-- 8. MutationObserver -->
+  <section>
+    <h2>8. MutationObserver（監聽 DOM 變動）</h2>
+    <p>下方會監聽「2. 新增項目」區塊的子節點變動。每新增或刪除項目，這裡都會記錄一次。</p>
+    <button id="add-observer-btn">新增被監聽的節點</button>
+    <pre id="mutation-log" style="background:#f5f5f5;padding:10px;border-radius:4px;max-height:160px;overflow-y:auto;"></pre>
+  </section>
+
   <script>
     // 1. 選取元素：querySelector / getElementById
     const selectBtn = document.getElementById('select-btn');
@@ -160,6 +178,56 @@
       }
       formMsg.textContent = `送出成功！歡迎 ${name}（${email}）`;
       formMsg.className = 'ok-msg';
+    });
+
+    // 7. IntersectionObserver：元素進入視窗時觸發
+    const ioTargets = document.getElementById('io-targets');
+    // 產生 5 個觀察方塊，間隔較遠以利捲動示範
+    for (let i = 1; i <= 5; i++) {
+      const box = document.createElement('div');
+      box.className = 'box';
+      box.style.margin = '60px 0';
+      box.style.height = '80px';
+      box.style.lineHeight = '80px';
+      box.style.textAlign = 'center';
+      box.dataset.index = i;
+      box.textContent = `方塊 ${i}（尚未進入視窗）`;
+      ioTargets.appendChild(box);
+    }
+
+    const ioObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('highlight');
+          entry.target.textContent = `方塊 ${entry.target.dataset.index} ✅ 已進入視窗`;
+          ioObserver.unobserve(entry.target); // 觀察一次後停止
+        }
+      });
+    }, { threshold: 0.5 }); // 50% 進入視窗才算
+
+    document.querySelectorAll('#io-targets .box').forEach((el) => ioObserver.observe(el));
+
+    // 8. MutationObserver：監聽指定節點的子節點變動
+    const mutationLog = document.getElementById('mutation-log');
+    const observerTarget = document.getElementById('list-area'); // 與「2. 新增項目」共用
+    const moObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          const added = mutation.addedNodes.length;
+          const removed = mutation.removedNodes.length;
+          mutationLog.textContent += `[${new Date().toLocaleTimeString()}] 新增 ${added} / 刪除 ${removed}\n`;
+          mutationLog.scrollTop = mutationLog.scrollHeight;
+        }
+      });
+    });
+    moObserver.observe(observerTarget, { childList: true, subtree: true });
+
+    // 提供獨立按鈕也能在被監聽的區塊新增節點
+    document.getElementById('add-observer-btn').addEventListener('click', () => {
+      const node = document.createElement('div');
+      node.className = 'box';
+      node.textContent = `Observer 測試節點 ${Date.now()}`;
+      observerTarget.appendChild(node);
     });
   </script>
 </body>

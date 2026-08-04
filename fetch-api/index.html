@@ -21,6 +21,10 @@
   <h1>Fetch API 入門範例</h1>
   <p>使用公開 API <a href="https://jsonplaceholder.typicode.com" target="_blank">JSONPlaceholder</a> 示範。</p>
 
+  <p>
+    <label><input type="checkbox" id="offline-toggle" /> 離線模式（改用內嵌假資料，不需網路）</label>
+  </p>
+
   <!-- 1. GET 請求 -->
   <section>
     <h2>1. GET 請求（取得資料）</h2>
@@ -53,8 +57,100 @@
     <p class="status" id="abort-status"></p>
   </section>
 
+  <!-- 5. PUT 請求 -->
+  <section>
+    <h2>5. PUT 請求（更新資料）</h2>
+    <button id="put-btn">更新文章 id=1</button>
+    <p class="status" id="put-status"></p>
+    <pre id="put-result"></pre>
+  </section>
+
+  <!-- 6. DELETE 請求 -->
+  <section>
+    <h2>6. DELETE 請求（刪除資料）</h2>
+    <button id="delete-btn">刪除文章 id=1</button>
+    <p class="status" id="delete-status"></p>
+    <pre id="delete-result"></pre>
+  </section>
+
+  <!-- 7. CORS 概念示範 -->
+  <section>
+    <h2>7. CORS 示範（故意觸發錯誤）</h2>
+    <p>對未設定 CORS 標頭的網域發送請求，瀏覽器會擋下回應並在 console 拋出 CORS 錯誤。</p>
+    <button id="cors-btn">發送跨網域請求（預期失敗）</button>
+    <p class="status" id="cors-status"></p>
+    <p id="cors-note" style="font-size:13px;color:#666;">
+      按下後請同時開啟 DevTools Console 觀察 CORS 錯誤訊息。
+    </p>
+  </section>
+
   <script>
     const API = 'https://jsonplaceholder.typicode.com';
+
+    // ── 離線模式：內嵌假資料與模擬 fetch ──────────
+    const MOCK_POSTS = Array.from({ length: 5 }, (_, i) => ({
+      userId: 1,
+      id: i + 1,
+      title: `假資料文章 ${i + 1}`,
+      body: `這是假資料內容 ${i + 1}`,
+    }));
+
+    let offlineMode = false;
+    document.getElementById('offline-toggle').addEventListener('change', (e) => {
+      offlineMode = e.target.checked;
+      console.log(`離線模式：${offlineMode ? '開啟' : '關閉'}`);
+    });
+
+    // 模擬 Response 物件（精簡版，支援 .ok / .status / .json()）
+    function mockResponse(status, data) {
+      return {
+        ok: status >= 200 && status < 300,
+        status,
+        json: async () => data,
+      };
+    }
+
+    // 依 URL/method 回傳對應假資料
+    function mockFetch(url, options = {}) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const method = (options.method || 'GET').toUpperCase();
+          if (url.includes('/posts/999999')) {
+            resolve(mockResponse(404, { error: '找不到資源' }));
+            return;
+          }
+          if (/\/posts\/\d+$/.test(url) && method === 'GET') {
+            const id = Number(url.split('/posts/')[1]);
+            const post = MOCK_POSTS.find((p) => p.id === id);
+            resolve(mockResponse(200, post || { id, title: '假資料', body: '內容' }));
+            return;
+          }
+          if (url.includes('/posts') && method === 'GET') {
+            resolve(mockResponse(200, MOCK_POSTS));
+            return;
+          }
+          if (method === 'POST') {
+            resolve(mockResponse(201, { id: 101, ...JSON.parse(options.body) }));
+            return;
+          }
+          if (method === 'PUT') {
+            const id = Number(url.split('/posts/')[1]);
+            resolve(mockResponse(200, { id, ...JSON.parse(options.body) }));
+            return;
+          }
+          if (method === 'DELETE') {
+            resolve(mockResponse(200, {}));
+            return;
+          }
+          resolve(mockResponse(404, { error: '未知路由' }));
+        }, 200);
+      });
+    }
+
+    // 統一包裝：依離線模式切換真實/模擬
+    function doFetch(url, options) {
+      return offlineMode ? mockFetch(url, options) : fetch(url, options);
+    }
 
     // 1. GET 請求（搭配 async/await）
     document.getElementById('get-btn').addEventListener('click', async () => {
@@ -63,11 +159,11 @@
       status.textContent = '載入中...';
       result.textContent = '';
       try {
-        const res = await fetch(`${API}/posts?_limit=5`);
+        const res = await doFetch(`${API}/posts?_limit=5`);
         // 注意：fetch 只在網路錯誤時 reject，HTTP 4xx/5xx 不會自動 reject
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        status.textContent = `✅ 取得成功（HTTP ${res.status}）`;
+        status.textContent = `✅ 取得成功（HTTP ${res.status}）${offlineMode ? '〔離線〕' : ''}`;
         status.className = 'status ok';
         result.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
@@ -83,7 +179,7 @@
       status.textContent = '送出中...';
       result.textContent = '';
       try {
-        const res = await fetch(`${API}/posts`, {
+        const res = await doFetch(`${API}/posts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -94,7 +190,7 @@
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        status.textContent = `✅ 新增成功（HTTP ${res.status}，id: ${data.id}）`;
+        status.textContent = `✅ 新增成功（HTTP ${res.status}，id: ${data.id}）${offlineMode ? '〔離線〕' : ''}`;
         status.className = 'status ok';
         result.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
@@ -110,7 +206,7 @@
       status.textContent = '請求中...';
       result.textContent = '';
       try {
-        const res = await fetch(`${API}/posts/999999`);
+        const res = await doFetch(`${API}/posts/999999`);
         // res.ok 為 false（404），需手動拋出錯誤
         if (!res.ok) throw new Error(`HTTP ${res.status} — 找不到資源`);
         const data = await res.json();
@@ -122,7 +218,7 @@
       }
     });
 
-    // 4. AbortController 取消請求
+    // 4. AbortController 取消請求（此範例固定用真實網路以示範中斷）
     let controller;
     document.getElementById('start-btn').addEventListener('click', async () => {
       const status = document.getElementById('abort-status');
@@ -148,6 +244,65 @@
     });
     document.getElementById('cancel-btn').addEventListener('click', () => {
       if (controller) controller.abort();
+    });
+
+    // 5. PUT 請求（更新資料）
+    document.getElementById('put-btn').addEventListener('click', async () => {
+      const status = document.getElementById('put-status');
+      const result = document.getElementById('put-result');
+      status.textContent = '更新中...';
+      result.textContent = '';
+      try {
+        const res = await doFetch(`${API}/posts/1`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: 1, title: '已更新的標題', body: '更新後內容', userId: 1 }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        status.textContent = `✅ 更新成功（HTTP ${res.status}）${offlineMode ? '〔離線〕' : ''}`;
+        status.className = 'status ok';
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = `❌ ${err.message}`;
+        status.className = 'status error';
+      }
+    });
+
+    // 6. DELETE 請求（刪除資料）
+    document.getElementById('delete-btn').addEventListener('click', async () => {
+      const status = document.getElementById('delete-status');
+      const result = document.getElementById('delete-result');
+      status.textContent = '刪除中...';
+      result.textContent = '';
+      try {
+        const res = await doFetch(`${API}/posts/1`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        status.textContent = `✅ 刪除成功（HTTP ${res.status}，回應為空物件）${offlineMode ? '〔離線〕' : ''}`;
+        status.className = 'status ok';
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = `❌ ${err.message}`;
+        status.className = 'status error';
+      }
+    });
+
+    // 7. CORS 示範：對不允許跨網域的資源發送請求（固定用真實網路）
+    document.getElementById('cors-btn').addEventListener('click', async () => {
+      const status = document.getElementById('cors-status');
+      status.textContent = '請求中...（預期失敗）';
+      status.className = 'status';
+      try {
+        // 故意請求未設定 CORS 標頭的網域，瀏覽器會擋下
+        const res = await fetch('https://httpbin.org/image/png');
+        const blob = await res.blob();
+        status.textContent = `意外成功（HTTP ${res.status}，${blob.size} bytes）— 此網域允許 CORS`;
+        status.className = 'status ok';
+      } catch (err) {
+        status.textContent = `❌ 請求被瀏覽器擋下：${err.message}（請見 Console 的 CORS 錯誤）`;
+        status.className = 'status error';
+      }
     });
   </script>
 </body>

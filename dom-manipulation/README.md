@@ -10,15 +10,15 @@ DOM 操作與事件處理範例。
 - 事件冒泡（Bubbling）與捕獲（Capturing）
 - `classList` 操作
 - 表單驗證
+- `IntersectionObserver`（元素進入視窗）
+- `MutationObserver`（監聽 DOM 變動）
 
 ## 檔案清單
 
 | 檔案 | 說明 |
 |---|---|
-| [index.html](index.html) | 互動式入門範例，涵蓋上述主題 |
+| [index.html](index.html) | 互動式入門範例，涵蓋上述所有主題（8 個區塊） |
 
 ## 執行方式
 
 直接用瀏覽器開啟 `index.html` 即可互動操作。
-
-> IntersectionObserver / MutationObserver 等進階主題之後會再補充獨立範例。
