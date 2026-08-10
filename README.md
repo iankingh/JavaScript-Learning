@@ -53,6 +53,6 @@ JavaScript-Learning/
 ## 設定與限制
 
 - 不需環境變數或秘密設定。
-- `fetch-api/` 預設呼叫 JSONPlaceholder，另有一個刻意觸發 CORS 的 httpbin 範例；可切換頁面內的離線模式。
+- `fetch-api/` 預設呼叫 JSONPlaceholder，另有一個刻意觸發 CORS 的跨網域範例；可切換頁面內的離線模式。
 - `image-processing/heic2any/vendor/heic2any.js` 已存放於倉庫，不會由 npm 安裝。
 - 這是可手動操作的學習範例集，目前沒有自動化測試或統一開發伺服器。

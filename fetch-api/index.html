@@ -294,10 +294,10 @@
       status.textContent = '請求中...（預期失敗）';
       status.className = 'status';
       try {
-        // 故意請求未設定 CORS 標頭的網域，瀏覽器會擋下
-        const res = await fetch('https://httpbin.org/image/png');
-        const blob = await res.blob();
-        status.textContent = `意外成功（HTTP ${res.status}，${blob.size} bytes）— 此網域允許 CORS`;
+        // 故意請求未設定 CORS 標頭的網域（example.com），瀏覽器會擋下回應
+        const res = await fetch('https://www.example.com');
+        // 若真的成功（伺服器新增了 CORS 標頭），顯示狀態碼
+        status.textContent = `意外成功（HTTP ${res.status}）— 此網域回傳了 CORS 標頭`;
         status.className = 'status ok';
       } catch (err) {
         status.textContent = `❌ 請求被瀏覽器擋下：${err.message}（請見 Console 的 CORS 錯誤）`;
