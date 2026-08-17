@@ -8,7 +8,7 @@
 - 請求標頭（Headers）設定
 - JSON 資料處理
 - 錯誤處理（HTTP 狀態碼判斷、`res.ok`）
-- `AbortController` 取消請求
+- `AbortController` 取消請求（使用固定延遲的本地 mock，結果可重現）
 - CORS 概念（實際示範跨網域被擋下）
 - 與 `async/await` 搭配使用
 - 離線模式（內嵌假資料，不需網路）

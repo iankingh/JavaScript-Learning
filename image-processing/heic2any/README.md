@@ -28,4 +28,12 @@ heic2any/
 
 ## Vendor 來源
 
-`vendor/heic2any.js` 來自 [heic2any v0.0.4](https://github.com/alexcorvi/heic2any)，MIT License。
+`vendor/heic2any.js` 來自 [heic2any v0.0.4](https://github.com/alexcorvi/heic2any/tree/0.0.4)，上游以 MIT License 發布；vendored bundle 內也保留了相依程式碼的授權聲明。
+
+為避免日後在沒有版本資訊的情況下誤換 bundle，目前檔案的 SHA-256 是：
+
+```text
+b149057ad0b93f3c8e73c461bea4d50fb2b615d511da89848763ebd5adf48a22  vendor/heic2any.js
+```
+
+更新 vendor 時應同時更新版本連結、hash，並確認新 bundle 仍保留必要的授權聲明。
